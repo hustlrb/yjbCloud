@@ -1,5 +1,6 @@
 var AV = require('leanengine')
 var authFunc = require('./cloudFuncs/Auth')
+var userFunc = require('./cloudFuncs/Auth/User')
 var activityFunc = require('./cloudFuncs/Activity')
 var deviceFunc = require('./cloudFuncs/Device')
 var PingppFunc = require('./cloudFuncs/Pingpp')
@@ -19,6 +20,11 @@ AV.Cloud.define('authFetchWalletInfo', authFunc.fetchWalletInfo)
 AV.Cloud.define('authFetchDealRecords', authFunc.fetchDealRecords)
 AV.Cloud.define('authVerifyIdName', authFunc.verifyIdName)
 AV.Cloud.define('wechatIsSubscribe', mpUserFuncs.isSubscribe)
+
+AV.Cloud.define('userFetch', userFunc.fetchUser);
+AV.Cloud.define('userCreate', userFunc.createUser);
+AV.Cloud.define('userDelete', userFunc.deleteUser);
+AV.Cloud.define('userUpdate', userFunc.updateUser);
 
 //设备
 AV.Cloud.define('deviceFetchDeviceInfo', deviceFunc.fetchDeviceInfo)
