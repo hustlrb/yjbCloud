@@ -12,7 +12,7 @@ async function authFetchRolesAndPermissions(req) {
   const jsonAllPermissions = [];
 
   // roles for current user
-  query = new AV.Query('User_Role_Map');
+  let query = new AV.Query('User_Role_Map');
   query.equalTo('user', leanActiveUser);
   // query.include(['role']);
   const leanUserRolePairs = await query.find();
@@ -23,7 +23,7 @@ async function authFetchRolesAndPermissions(req) {
   });
 
   // all roles
-  let query = new AV.Query('_Role');
+  query = new AV.Query('_Role');
   query.ascending('code');
   const leanAllRoles = await query.find();
 
