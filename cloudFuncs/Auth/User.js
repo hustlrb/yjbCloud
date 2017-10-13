@@ -1,6 +1,8 @@
 var AV = require('leanengine');
 
 async function fetchUser(req) {
+  const currentUser = req.currentUser;
+  console.log('fetchUser currentUser: ', currentUser);
   return {};
 }
 
