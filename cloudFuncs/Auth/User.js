@@ -278,6 +278,83 @@ async function authListAdminUsers(req) {
   };
 }
 
+/**
+ * Fetch admins by specified roles, i.e., which has has user type of 'admin' or 'both'.
+ * @param {object} req
+ * params = {
+ *   limit?: number,
+ *   nickname?: string,
+ *   mobilePhoneNumber?: string,
+ *   roles?: Array<number>, role codes
+ *   status?: string, 'disabled'
+ *   skipMyself: boolean
+ * }
+ * @returns {Promise.<Array>} an Array of json representation User(s)
+ */
+async function authFetchAdminsByRoles(req) {
+  const {currentUser, params} = req;
+
+  if (!currentUser) {
+    // no token provided
+    throw new AV.Cloud.Error('Permission denied, need to login first', {code: errno.EPERM});
+  }
+
+  const {skip=0, limit=10, nickname, mobilePhoneNumber, roles, status, skipMyself=false} = params;
+
+  const jsonUsers = [];
+
+  const {mobilePhoneNumber: myMobilePhoneNumber} = currentUser.attributes;
+
+  const values = [];
+  let cql = 'select count(*),* from _User';
+  cql += ' where (type=? or type=?)';
+  values.push(AUTH_USER_TYPE.ADMIN);
+  values.push(AUTH_USER_TYPE.BOTH);
+  if (skipMyself) {
+    // exclude myself
+    cql += ' and mobilePhoneNumber!=?';
+    values.push(myMobilePhoneNumber);
+  }
+  if (nickname) {
+    cql += ' and nickname=?';
+    values.push(nickname);
+  }
+  if (mobilePhoneNumber) {
+    cql += ' and mobilePhoneNumber=?';
+    values.push(mobilePhoneNumber);
+  }
+  if (roles) {
+    // match user who has any role in provided array, change 'in' to 'all' to match
+    // user who has all roles in provided array
+    cql += ' and roles in ?';
+    values.push(roles);
+  }
+  if (status) {
+    if (status === AUTH_USER_STATUS.ADMIN_DISABLED) {
+      cql += ' and status=?';
+      values.push(AUTH_USER_STATUS.ADMIN_DISABLED);
+    } else if (status === AUTH_USER_STATUS.ADMIN_NORMAL) {
+      cql += ' and (status is not exists or status=?)';
+      values.push(AUTH_USER_STATUS.ADMIN_NORMAL);
+    }
+  }
+  cql += ' limit ?,?';
+  values.push(skip);
+  values.push(limit);
+  cql += ' order by -createdAt';
+
+  const {count, results} = await AV.Query.doCloudQuery(cql, values);
+
+  results.forEach((i) => {
+    jsonUsers.push(constructUserInfo(i));
+  });
+
+  return {
+    count,
+    jsonUsers
+  };
+}
+
 async function authFetchSysAdminUsers(nickname, mobilePhoneNumber, status, limit) {
   const jsonUsers = [];
 
